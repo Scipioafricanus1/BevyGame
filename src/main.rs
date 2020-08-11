@@ -8,6 +8,7 @@ fn main() {
         .run();
 }
 
+///adds components
 fn add_people(mut commands: Commands) {
     commands
         .spawn((Person, Name("Elaina Proctor".to_string())))
