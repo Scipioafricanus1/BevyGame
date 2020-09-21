@@ -1,0 +1,46 @@
+[
+    (
+        entity: 328997855,
+        components: [
+            {
+                "type": "Position",
+                "map": { "x": 3.0, "y", 4.0 }
+            },
+        ],
+    ),
+    (
+        entity: 404566393,
+        components: [
+            {
+                "type": "Position",
+                "map": { "x": 1.0, "y": 2.0 },
+            },
+            {
+                "type": "Name",
+                "map": { "value": "Carter" },
+            },
+        ],
+    ),
+    /*
+        Enemy unit:
+        combatStats, combatAI, position, items, renderable, hostile
+        
+    */
+    (
+        entity: 10931093,
+        components: [
+            {
+                "type": "Position",
+                "map": { "x": 1.0, "y": 2.0 },
+            },
+            {
+                "type": "",
+                "map": { }
+            }
+        ]
+    )
+
+    
+
+
+]
