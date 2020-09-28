@@ -1,10 +1,23 @@
 use bevy::{
-    prelude::*,
+    prelude::*, 
+    render::pass::ClearColor,
+    window::WindowMode,
 };
 use rand::Rng;
 fn main() {
     App::build()
+        .init_resource::<Map>()
+        .add_resource(ClearColor(Color::rgb(0.2, 0.2, 0.8)))
+        .add_resource(WindowDescriptor {
+            title: "I am a window!".to_string(),
+            width: 800,
+            height: 600,
+            vsync: true,
+            resizable: false,
+            ..Default::default()
+        })
         .add_default_plugins()
+        .add_startup_system(startup_system.system())
         .run();
 }
 
@@ -40,48 +53,80 @@ enum TileType {
     Floor,
     Wall,
 }
-fn new_map() -> Vec<TileType> {
-    let mut map = vec![TileType::Floor; 80*50];
+#[derive(Default)]
+struct Map {
+    map: Vec<TileType>
+}
 
-    for x in 0..80 {
-        map[xy_idx(x, 0)] = TileType::Wall;
-        map[xy_idx(x, 49)] = TileType::Wall;
+fn startup_system( mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut materials: ResMut<Assets<ColorMaterial>>, mut map: ResMut<Map> ) {
+    //call new_map and assign this to map resource
+    map.map = new_map();
+
+    //draw_map
+    let mut y = 0;
+    let mut x = 0;
+
+    let map = &map.map;
+    commands.spawn(Camera2dComponents::default());
+    let mut i = 0;
+    for tile in map.iter() {
+        println!("tile Made: {} at x:{} y: {}", i, x, y);
+        i+=1;
+        match tile {
+            TileType::Floor => {
+                commands
+                .spawn(SpriteComponents {
+                    material: materials.add(Color::GREEN.into()),
+                    sprite: Sprite::new(Vec2::new(10.0, 10.0)),
+                    transform: Transform::from_translation(Vec3::new(x as f32, y as f32, 0.0)),
+                    ..Default::default()
+                });
+            },
+            TileType::Wall => {
+                commands
+                .spawn(SpriteComponents {
+                    material: materials.add(Color::BLACK.into()),
+                    sprite: Sprite::new(Vec2::new(10.0, 10.0)),
+                    transform: Transform::from_translation(Vec3::new(x as f32, y as f32, 0.0)),
+                    ..Default::default()
+                });
+            }
+        }
+        x += 10;
+        if x > 799 {
+            x = 0;
+            y += 10;
+        }
     }
-    for y in 0..50 {
+}
+
+fn new_map() -> Vec<TileType> {
+    let columns:i32 = 80;
+    let rows:i32 = 60;
+    let mut map = vec![TileType::Floor; columns as usize * rows as usize];
+
+    for x in 0..columns {
+        map[xy_idx(x, 0)] = TileType::Wall;
+        map[xy_idx(x, rows-1)] = TileType::Wall;
+    }
+    for y in 0..rows {
         map[xy_idx(0, y)] = TileType::Wall;
-        map[xy_idx(79, y)] = TileType::Wall;
+        map[xy_idx(columns-1, y)] = TileType::Wall;
     }
 
     //create 400 random walls
     let mut rng = rand::thread_rng();
     for i in 0..400 {
-        let x = rng.gen_range(0, 79);
-        let y = rng.gen_range(0, 49);
+        let x = rng.gen_range(0, columns-1);
+        let y = rng.gen_range(0, rows-1);
         let idx = xy_idx(x, y);
         // if not the place for character.
-        if idx != xy_idx(40, 25) {
+        if idx != xy_idx(columns/2, rows/2) {
             map[idx] = TileType::Wall;
         }
     }
     map
 }
 
-fn draw_map(map: &[TileType]) {
-    let mut y = 0;
-    let mut x = 0;
-    for tile in map.iter() {
-        match tile {
-            TileType::Floor => {
-
-            },
-            TileType::Wall => {
-
-            }
-        }
-        x += 1;
-        if x > 79 {
-            x = 0;
-            y += 1;
-        }
-    }
-}
