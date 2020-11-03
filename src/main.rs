@@ -49,27 +49,29 @@ fn xy_idx(x:i32, y:i32) -> usize {
     (y as usize * 80 ) + x as usize
 }
 #[derive(PartialEq,Copy, Clone)]
-enum TileType {
+pub enum TileType {
     Floor,
     Wall,
 }
 #[derive(Default)]
-struct Map {
+pub struct Map {
     map: Vec<TileType>
 }
 
 fn startup_system( mut commands: Commands,
-    asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<ColorMaterial>>, mut map: ResMut<Map> ) {
-    //call new_map and assign this to map resource
-    map.map = new_map();
+    map.map = new_map_rooms_and_corridors();
 
     //draw_map
     let mut y = 0;
     let mut x = 0;
 
     let map = &map.map;
-    commands.spawn(Camera2dComponents::default());
+    commands.spawn(Camera2dComponents {
+        transform: Transform::from_translation(Vec3::new(400.0, 300.0, 0.0)),
+        ..Default::default()
+    });
+    
     let mut i = 0;
     for tile in map.iter() {
         println!("tile Made: {} at x:{} y: {}", i, x, y);
@@ -102,31 +104,50 @@ fn startup_system( mut commands: Commands,
     }
 }
 
-fn new_map() -> Vec<TileType> {
+pub fn new_map_rooms_and_corridors() -> Vec<TileType> {
     let columns:i32 = 80;
     let rows:i32 = 60;
-    let mut map = vec![TileType::Floor; columns as usize * rows as usize];
+    let mut map = vec![TileType::Wall; columns as usize * rows as usize];
 
-    for x in 0..columns {
-        map[xy_idx(x, 0)] = TileType::Wall;
-        map[xy_idx(x, rows-1)] = TileType::Wall;
-    }
-    for y in 0..rows {
-        map[xy_idx(0, y)] = TileType::Wall;
-        map[xy_idx(columns-1, y)] = TileType::Wall;
-    }
+    let room1 = Rect::new(20, 15, 10, 15);
+    let room2 = Rect::new(35, 15, 10, 15);
 
-    //create 400 random walls
-    let mut rng = rand::thread_rng();
-    for i in 0..400 {
-        let x = rng.gen_range(0, columns-1);
-        let y = rng.gen_range(0, rows-1);
-        let idx = xy_idx(x, y);
-        // if not the place for character.
-        if idx != xy_idx(columns/2, rows/2) {
-            map[idx] = TileType::Wall;
-        }
-    }
+    apply_room_to_map(&room1, &mut map);
+    apply_room_to_map(&room2, &mut map);
+
     map
 }
 
+pub struct Rect {
+    x1: i32,
+    y1: i32,
+    x2: i32,
+    y2: i32,
+}
+
+impl Rect {
+    /// makes rectangle with points x1, y1, x2, y2 using x, y, width, height
+    pub fn new(x1: i32, y1: i32, w: i32, h: i32) -> Rect {
+        Rect {
+            x1, y1, x2: x1+w, y2: y1 + h,            
+        }
+    }
+    ///returns true if they both intersect. 
+    pub fn intersect(&self, other: &Rect) -> bool {
+        other.x1 <= self.x2 && other.x2 >= self.x1 && other.y1 <= self.y2 && other.y2 >= self.y1
+    }
+
+
+    ///computes the x, y coords for the center of the rectangle.
+    pub fn center(&self) -> (i32, i32) {
+        ((self.x1 + self.x2)/2, (self.y1 + self.y2)/2)
+    }
+}
+///takes rect room, map, and draws floor pixels onto map.
+fn apply_room_to_map(room: &Rect, map: &mut [TileType] ) {
+    for y in room.y1+1..= room.y2 {
+        for x in room.x1 + 1..= room.x2 {
+            map[xy_idx(x,y)] = TileType::Floor;
+        }
+    }
+}
