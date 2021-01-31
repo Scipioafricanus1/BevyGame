@@ -1,0 +1,97 @@
+1. spawn entity with player component, weapon component with enum of weapon name.
+
+
+COMPONENTS:
+
+CHARACTER [CHARACTER_TYPE( HEALTH_MAX, STAMINA_MAX, ABILITIES_LIST)]
+COMBAT_STATS [HEALTH, STAMINA, WEAPON]
+RANGED_AI
+MELEE_AI
+POSITION
+RENDERABLE
+HOSTILE
+PROJECTILE
+BULLET(SPEED, DIRECTION, DMG),
+ARCSHOT( ANGLE, SPEED, DIRECTION, DMG )
+VELOCITY?
+
+
+
+ENTITIES SPAWNED:
+ARCHER,
+GOBLIN,
+ORC,
+PLAYER
+SHIP_GRUNT
+SHIP_ELITE
+SHIP_MONSTER
+SHIP_MECH
+
+
+
+SYSTEMS:
+ARCHER_AI_SYSTEM {
+QUERY ENTITY WITH ARCHER_AI AND POSITION.
+  - QUERY ENTITY WITH PLAYER AND POSITION.
+     - Use the position of player and the Archer to decide a delta for position of AI. If unit is in range, just fire and keep distance to an extent.
+}
+
+MELEE_AI_SYSTEM {
+QUERY ENTITY WITH MELEE_AI AND POSITION.
+  - QUERY ENTITY WITH PLAYER AND POSITION.
+     - Use the position of player and the meleeChar to decide a delta for position of AI. If unit is in range, just stay still and hit.
+}
+
+PLAYER_MOVEMENT_SYSTEM {
+QUERY ENTITY WITH PLAYER AND POSITION
+ - MOVE BASED ON THE INPUT KEYBOARD.
+}
+
+PLAYER DIVE_ROLL_SYSTEM {
+	QUERY ENTITY WITH PLAYER AND POSITION
+	 - MOVE BASED ON THE INPUT FROM KEYBOARD, USING A SPECIFIC SPRITESHEET SECTION
+	 - WILL SPRITESHEET REPEATS MIDDLE PART (I.E. MOVING THROUGH THE AIR, WHILE STILL FALLING) UNTIL COLLISION WITH GROUND IS IMMINENT. 
+}
+PLAYER JUMP_SYSTEM {
+	//VERY SIMILAR TO PREVIOUS ONE WITH DIFFERENT SPRITESHEET AND TIMEFRAME AND ARC.
+}
+
+
+
+
+STRAIGHT_PROJECTILE_SYSTEM {
+QUERY ENTITY WITH POSITION, PROJECTILE, BULLET
+- query for collideable entities: QUERY ENTITY WITH COLLIDEABLE, POSITION, COMBAT_STATS
+       - REMOVE SOME HP FOR THE HIT,
+}
+
+ARC_PROJECTILE_SYSTEM {
+QUERY ENTITY WITH POSITION, PROJECTILE, ARCSHOT
+- query for collideable entities: QUERY ENTITY WITH COLLIDEABLE, POSITION, COMBAT_STATS
+  - remove some hp for the hit
+}
+
+A player busts through the dropship door, smoke coming out, with a gun. They test out the gun first, shoots at AR speed with reload mechanic as the clip empties. Shoots faster bullets but less damage.
+Player runs then jumps, a floaty sort of jump so player can move through the air in a cool way.
+
+as he walks through the room, flashing lights everywhere because it's a scifi spaceship he just invaded. He sees some grunts chilling in their cots. You can choose to shoot them right there or walk through the room and have them wake up when you see some guards privvy to your breaking and entering their ship start to fire upon you. Or we can have one doing a task on the ship, then freaking out and running for the hills when they see you first thing.
+
+The game slowly introduces the massive ship and its soldiers. you must mow them down to take the ship out. Your first goal given to you from the dropship is "Take the ship."
+
+As you play, new information will be given to you on how you will go about taking the ship. Verticality will be a thing as this is just a fucking massive ship. Think Houston sized. Miles of areas to traverse.
+
+You replace your weapons with the Enemy's weapons as you play.
+
+You play in a squad of 4 people. The four people act as your in-game lives. The other three tend to follow and don't die. They'll shoot too but aren't as effective as you. When you die, you switch off to them. They take your brainchip out and can do Altered Carbon-style override transfers into some enemies. Each one having their own capabilities and shit.
+
+Say, you are about to fight a boss that you've failed at as a human for a while as his ground slams stagger anyone on the floor, and his projectiles are hard to dodge at the same time. You and your squad melee a winged enemy, knocking him down, then you put your brainchip in it. Your normal human body collapses, and you now have flying capabilities along with whatever skills that monster-type has.
+
+
+Or you get charged at by a monster. Your squad brings it down to low hp, and then right as it's low, you have a two second window to Override him with the brainchip. Your dude already has the brainchip of one of your squadmates that just got murdered by it, so you install it now. You now have that monster on your side.  There are limitations to having a certain monster-type, but it's got super high health usually and can wipe the floor with most lower-level foes. 
+
+
+
+
+
+STRETCH GOALS: 
+- Networking setup so your squad is multiplayer.
