@@ -1575,6 +1575,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "game-UI"
+version = "0.1.0"
+
+[[package]]
 name = "game-ai"
 version = "0.1.0"
 dependencies = [

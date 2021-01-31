@@ -15,6 +15,21 @@ pub mod stages {
     pub const POST_UPDATE: &'static str = "post_update";
 }
 
+pub struct CorePlugin;
+
+impl Plugin for CorePlugin {
+    fn build(&self, app: &mut AppBuilder) {
+        app.init_resource::<InputTimer>();
+    }
+}
+
+#[derive(Debug)]
+pub struct InputTimer(pub Timer);
+impl Default for InputTimer {
+    fn default() -> Self {
+        InputTimer(Timer::from_seconds(0.1, false))
+    }
+}
 
 
 

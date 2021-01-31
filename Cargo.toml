@@ -26,3 +26,4 @@ game-input = {path = "crates/game-input", version = "0.1.0"}
 game-sprites = {path = "crates/game-sprites", version = "0.1.0"}
 game-scenes = {path = "crates/game-scenes", version = "0.1.0"}
 game-world = {path = "crates/game-world", version = "0.1.0"}
+game-ui = {path = "crates/game-ui", version = "0.1.0"}

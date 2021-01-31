@@ -13,7 +13,14 @@ fn main() {
         .add_startup_stage(stages::INIT, SystemStage::parallel())
         .add_startup_stage(stages::POST_INIT, SystemStage::parallel())
         .add_stage_after(stages::UPDATE, stages::POST_UPDATE, SystemStage::parallel())
+        .add_startup_system(setup.system())
         .run();
+}
+///initialize some things first thing
+fn setup( mut commands: Commands) {
+  /* create a sprite on the map */
+  
+
 }
 
 /*Planning of ECS and basics
