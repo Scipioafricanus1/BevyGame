@@ -40,4 +40,3 @@ You could build the same set of mobs with components for: Position, Renderable, 
 In bevy, you could add a scene file that does the work here. 
 */
 
-
