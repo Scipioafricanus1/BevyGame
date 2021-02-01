@@ -1,6 +1,6 @@
 use bevy::{
     prelude::*,
-    log::*,
+    prelude::KeyCode::*
 };
 
 use game_scenes::*;
@@ -12,15 +12,56 @@ fn main() {
         //add init and post init stages, then add post update stage after update
         .add_startup_stage(stages::INIT, SystemStage::parallel())
         .add_startup_stage(stages::POST_INIT, SystemStage::parallel())
-        .add_stage_after(stages::UPDATE, stages::POST_UPDATE, SystemStage::parallel())
         .add_startup_system(setup.system())
+        //if init is a startup, you have to use add_startup_system_to_stage instead of just add system to stage
+        .add_startup_system_to_stage(stages::INIT, spawn_player.system())
+        .add_system(player_movement.system())
         .run();
 }
 ///initialize some things first thing
-fn setup( mut commands: Commands) {
-  /* create a sprite on the map */
-  
+fn setup( commands: &mut Commands, mut materials: ResMut<Assets<ColorMaterial>>) {
+  /* create a sprite on the map 
+  for now, lets just get some basic code down then separate it into the stages later when we realize how it should work.*/
+  commands.spawn(Camera2dBundle::default());
+  //you gotta add the materials you're going to have on the map as a resource
+  commands.insert_resource(Materials {
+    player_material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
+  });
 
+}
+
+struct Player;
+struct Materials {
+  player_material: Handle<ColorMaterial>,
+}
+
+fn spawn_player(commands: &mut Commands, materials: Res<Materials>) {
+  commands
+    .spawn(SpriteBundle {
+      material: materials.player_material.clone(),
+      sprite: Sprite::new(Vec2::new(10.0, 10.0)),
+      ..Default::default()
+    })
+    .with(Player);
+}
+
+fn player_movement( keyboard_input: Res<Input<KeyCode>>,
+  mut player_positions: Query<&mut Transform, With<Player>>) {
+  for mut transform in player_positions.iter_mut() {
+    // transform.translation.y += 2.;
+    if keyboard_input.pressed(KeyCode::Left) {
+      transform.translation.x -= 2.;
+    }
+    if keyboard_input.pressed(KeyCode::Right) {
+      transform.translation.x += 2.;
+    }
+    if keyboard_input.pressed(KeyCode::Up) {
+      transform.translation.y += 2.;
+    }
+    if keyboard_input.pressed(KeyCode::Down) {
+      transform.translation.y -= 2.;
+    }
+  }
 }
 
 /*Planning of ECS and basics

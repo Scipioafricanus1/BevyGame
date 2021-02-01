@@ -1,4 +1,4 @@
-
+pub use bevy::{prelude::*,};
 
 
 
@@ -19,7 +19,8 @@ pub struct CorePlugin;
 
 impl Plugin for CorePlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.init_resource::<InputTimer>();
+        app.init_resource::<WorldSettings>()
+        .init_resource::<InputTimer>();
     }
 }
 
@@ -33,7 +34,23 @@ impl Default for InputTimer {
 
 
 
-
+pub struct WorldSettings {
+    pub tile_size: f32,
+    pub base_player_speed: f32,
+    pub base_npc_speed: f32,
+    pub base_scale: f32,
+  }
+  
+  impl Default for WorldSettings {
+    fn default() -> Self {
+      WorldSettings {
+        tile_size: 16.,
+        base_player_speed: 8.,
+        base_npc_speed: 8.,
+        base_scale: 5.,
+      }
+    }
+  }
 
 
 
