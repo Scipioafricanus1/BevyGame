@@ -14,13 +14,22 @@ const ARENA_HEIGHT: u32 = 10;
 fn main() {
     App::build()
         .add_resource(WindowDescriptor {
-          title: "Snake!".to_string(),
+          title: "Game".to_string(),
           width: 500.0,
           height: 500.0,
           ..Default::default()
         })
         .add_resource(ClearColor(Color::rgb(0.04, 0.04, 0.04)))
+        .add_resource(PlayerMoveTimer(Timer::new(
+          Duration::from_millis(150. as u64),
+          true,
+        )))
+        .add_resource(PlayerSegments::default())
+        .add_resource(LastTailPosition::default())
         .add_plugins(DefaultPlugins)
+        .add_event::<GrowthEvent>()
+        .add_system(player_growth.system())
+        .add_system(player_eating.system())
         //add init and post init stages, then add post update stage after update
         .add_startup_stage(stages::INIT, SystemStage::parallel())
         .add_startup_stage(stages::POST_INIT, SystemStage::parallel())
@@ -30,6 +39,8 @@ fn main() {
         .add_system(player_movement.system())
         .add_system(position_translation.system())
         .add_system(size_scaling.system())
+        .add_system(food_spawner.system())
+        .add_system(player_timer.system())
         .run();
 }
 ///initialize some things first thing
@@ -40,14 +51,70 @@ fn setup( commands: &mut Commands, mut materials: ResMut<Assets<ColorMaterial>>)
   //you gotta add the materials you're going to have on the map as a resource
   commands.insert_resource(Materials {
     player_material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
+    segment_material: materials.add(Color::rgb(0.3, 0.3, 0.3).into()),
     food_material: materials.add(Color::rgb(1.0, 0.0, 1.0).into()),
   });
 
 }
+///keeps track of the movement of the snake with time and timer until it ticks the number correct ammount
+fn player_timer(time: Res<Time>, mut player_timer: ResMut<PlayerMoveTimer>) {
+  player_timer.0.tick(time.delta_seconds());
+}
 
-struct Player;
+fn spawn_segment(
+  commands: &mut Commands,
+  material: &Handle<ColorMaterial>,
+  position: Position,
+) -> Entity {
+  commands
+    .spawn(SpriteBundle {
+      material: material.clone(),
+      ..Default::default()
+    })
+    .with(PlayerSegment)
+    .with(position)
+    .with(Size::square(0.65))
+    .current_entity()
+    .unwrap()
+}
+
+///NOTE: every time you add a new component that will be represented on the screen,
+/// you will need a new resource to be initialized.
+///  You can bundle them up in a materials struct for readability.
+struct PlayerSegment;
+
+#[derive(Default)]
+struct PlayerSegments(Vec<Entity>);
+
+#[derive(Default)]
+struct LastTailPosition(Option<Position>);
+
+#[derive(PartialEq, Copy, Clone)]
+enum Direction {
+  Left,
+  Up,
+  Right,
+  Down,
+}
+
+impl Direction {
+  fn opposite(self) -> Self {
+    match self {
+      Self::Left =>Self::Right,
+      Self::Right => Self::Left,
+      Self::Up => Self::Down,
+      Self::Down=> Self::Up,
+    }
+  }
+}
+
+struct PlayerMoveTimer(Timer);
+struct Player {
+  direction: Direction,
+}
 struct Materials {
   player_material: Handle<ColorMaterial>,
+  segment_material: Handle<ColorMaterial>,
   food_material: Handle<ColorMaterial>,
 }
 
@@ -59,7 +126,7 @@ impl Default for FoodSpawnTimer {
     Self(Timer::new(Duration::from_millis(1000), true))
   }
 }
-
+///System for spawning food with a local resource time
 fn food_spawner(
   commands: &mut Commands,
   materials: Res<Materials>,
@@ -80,36 +147,140 @@ fn food_spawner(
       .with(Size::square(0.8));
   }
 }
-
-fn spawn_player(commands: &mut Commands, materials: Res<Materials>) {
-  commands
+///On startup, we spawn the player with a vector of segments,
+/// player, position, size, spritebundle components
+fn spawn_player(
+  commands: &mut Commands, 
+  materials: Res<Materials>,
+  mut segments: ResMut<PlayerSegments>,
+) {
+  segments.0 = vec![
+    commands
     .spawn(SpriteBundle {
       material: materials.player_material.clone(),
       sprite: Sprite::new(Vec2::new(10.0, 10.0)),
       ..Default::default()
     })
-    .with(Player)
+    .with( Player {
+      direction: Direction::Up,
+    })
     .with(Position{ x: 3, y: 3})
-    .with(Size::square(0.8));
+    .with(Size::square(0.8))
+    .current_entity()
+    .unwrap(),
+    spawn_segment(
+      commands,
+      &materials.segment_material,
+      Position { x: 3, y: 2 },
+    ),
+  ];
 }
 
-fn player_movement( keyboard_input: Res<Input<KeyCode>>,
-  mut player_positions: Query<&mut Position, With<Player>>) {
-  for mut pos in player_positions.iter_mut() {
-    if keyboard_input.pressed(KeyCode::Left) {
-      pos.x -= 1;
-    }
-    if keyboard_input.pressed(KeyCode::Right) {
-      pos.x += 1;
-    }
-    if keyboard_input.pressed(KeyCode::Up) {
-      pos.y += 1;
-    }
-    if keyboard_input.pressed(KeyCode::Down) {
-      pos.y -= 1;
+fn player_eating(
+  commands: &mut Commands,
+  player_timer: ResMut<PlayerMoveTimer>,
+  mut growth_events: ResMut<Events<GrowthEvent>>,
+  food_positions: Query<(Entity, &Position), With<Food>>,
+  head_positions: Query<&Position, With<Player>>,)
+{
+  if !player_timer.0.finished() {
+    return;
+  }
+  for head_pos in head_positions.iter() {
+    for (ent, food_pos) in food_positions.iter() {
+      if food_pos == head_pos {
+        commands.despawn(ent);
+        growth_events.send(GrowthEvent);
+      }
+      
     }
   }
 }
+
+struct GrowthEvent;
+
+fn player_growth(
+  commands: &mut Commands,
+  last_tail_position: Res<LastTailPosition>,
+  growth_events: Res<Events<GrowthEvent>>,
+  mut segments: ResMut<PlayerSegments>,
+  mut growth_reader: Local<EventReader<GrowthEvent>>,
+  materials: Res<Materials>,
+) {
+  if growth_reader.iter(&growth_events).next().is_some() {
+    segments.0.push(spawn_segment(
+      commands,
+      &materials.segment_material,
+      last_tail_position.0.unwrap(),
+    ));
+  }
+}
+
+///If player timer is finished and direction is not opposite of current player direction,
+/// change the direction of the player. else continue the same direction.
+fn player_movement( 
+  keyboard_input: Res<Input<KeyCode>>,
+  player_timer: ResMut<PlayerMoveTimer>,
+  segments: ResMut<PlayerSegments>,
+  mut last_tail_position: ResMut<LastTailPosition>,
+  mut players: Query<(Entity, &mut Player)>,
+  mut positions: Query<&mut Position>) {
+  //so we don't have two queries accessing the same component,
+  // we separate it above, then grab them by iter_mut().next()
+  // and positions.get_mut(player_entity)
+  if let Some((player_entity, mut player)) = players.iter_mut().next() {
+    let segment_positions = segments
+      .0
+      .iter()
+      .map(|e| *positions.get_mut(*e).unwrap())
+      .collect::<Vec<Position>>();
+    let mut player_pos = positions.get_mut(player_entity).unwrap();
+    //after getting player_position from the two queries, we use input to
+    //determine the 
+    let dir: Direction = if keyboard_input.pressed(KeyCode::Left) {
+      Direction::Left
+    } else if keyboard_input.pressed(KeyCode::Up) {
+      Direction::Up
+    } else if keyboard_input.pressed(KeyCode::Right) {
+      Direction::Right
+    } else if keyboard_input.pressed(KeyCode::Down) {
+      Direction::Down
+    } else {
+      player.direction
+    };
+    if dir != player.direction.opposite() {
+      player.direction = dir;
+    }
+    if !player_timer.0.finished() {
+      return;
+    }
+
+    match &player.direction {
+      Direction::Left => {
+        player_pos.x -=1;
+      }
+      Direction::Right => {
+        player_pos.x +=1;
+      }
+      Direction::Up => {
+        player_pos.y +=1;
+      }
+      Direction::Down => {
+        player_pos.y -=1;
+      }
+    }
+    segment_positions
+      .iter()
+      .zip(segments.0.iter().skip(1))
+      .for_each(|(pos, segment)| {
+        *positions.get_mut(*segment).unwrap() = *pos;
+      });
+    last_tail_position.0 = Some(*segment_positions.last().unwrap());
+  }
+    
+}
+
+
 
 ///If sprite is 1 width, in a grid of 40, and the window size is 400 px,
 /// then pixel width will be 10px
