@@ -23,8 +23,6 @@ pub fn mech_ai_system() {
 
 
 
-
-
 #[cfg(test)]
 mod tests {
     #[test]

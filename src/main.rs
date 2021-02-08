@@ -3,7 +3,6 @@ use bevy::{
     render::pass::ClearColor,
 };
 
-use game_scenes::*;
 use game_core::*;
 use rand::prelude::random;
 use std::time::Duration;
@@ -66,7 +65,8 @@ fn spawn_segment(
   material: &Handle<ColorMaterial>,
   position: Position,
 ) -> Entity {
-  commands
+  info!("Spawning at position: X: {}, Y: {}", position.x, position.y);
+  let current_entity = commands
     .spawn(SpriteBundle {
       material: material.clone(),
       ..Default::default()
@@ -75,7 +75,9 @@ fn spawn_segment(
     .with(position)
     .with(Size::square(0.65))
     .current_entity()
-    .unwrap()
+    .unwrap();
+    info!("Spawened entity: {:?}", current_entity);
+    current_entity
 }
 
 ///NOTE: every time you add a new component that will be represented on the screen,
@@ -207,12 +209,15 @@ fn player_growth(
   mut growth_reader: Local<EventReader<GrowthEvent>>,
   materials: Res<Materials>,
 ) {
+  
   if growth_reader.iter(&growth_events).next().is_some() {
+    info!("Growth Event: last tail position: x: {}, y: {}", last_tail_position.0.unwrap().x, last_tail_position.0.unwrap().y);
     segments.0.push(spawn_segment(
       commands,
       &materials.segment_material,
       last_tail_position.0.unwrap(),
     ));
+    info!("segments Vec: {:?}", segments.0);
   }
 }
 
@@ -234,9 +239,10 @@ fn player_movement(
       .iter()
       .map(|e| *positions.get_mut(*e).unwrap())
       .collect::<Vec<Position>>();
+    info!("Segment positions: {:?}", segment_positions);
     let mut player_pos = positions.get_mut(player_entity).unwrap();
     //after getting player_position from the two queries, we use input to
-    //determine the 
+    //determine the movement
     let dir: Direction = if keyboard_input.pressed(KeyCode::Left) {
       Direction::Left
     } else if keyboard_input.pressed(KeyCode::Up) {
@@ -310,7 +316,7 @@ fn position_translation(windows: Res<Windows>, mut q: Query<(&Position, &mut Tra
   }
 }
 ///copyable, cloneable, hashable position.
-#[derive(Default, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Default, Copy, Clone, Eq, PartialEq, Hash)]
 struct Position {
   x: i32,
   y: i32,

@@ -16,12 +16,10 @@ pub mod stages {
 }
 
 pub struct CorePlugin;
-
 impl Plugin for CorePlugin {
-    fn build(&self, app: &mut AppBuilder) {
-        app.init_resource::<WorldSettings>()
-        .init_resource::<InputTimer>();
-    }
+  fn build( &self, app: &mut AppBuilder) {
+    
+  }
 }
 
 #[derive(Debug)]
@@ -52,8 +50,37 @@ pub struct WorldSettings {
     }
   }
 
+pub enum Direction {
+  None,
+  Left,
+  Right,
+  Up,
+  Down,
+}
+pub struct GameTimer(Timer);
+///Component: vector 1, vector 2 
+pub struct Movement{
+  vector1: Direction,
+  vector2: Direction,
+}
 
+pub fn timer_ticker_system(
+  timer: ResMut<GameTimer>,
+  time: Res<Time>,
+) {
 
+}
+
+/// movement system should be the same for NPC and Player imo
+/// we need movment, time resource that ticks down, timer that can finish, 
+/// and the entity we are moving
+pub fn move_system(
+  movement: Res<Movement>,
+  timer: Res<Timer>,
+  entity: Entity
+) {
+
+}
 
 
 
