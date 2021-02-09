@@ -1591,6 +1591,7 @@ name = "game-core"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "game-entities",
 ]
 
 [[package]]
@@ -1605,6 +1606,8 @@ name = "game-input"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "game-core",
+ "game-entities",
 ]
 
 [[package]]

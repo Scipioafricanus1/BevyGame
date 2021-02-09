@@ -315,6 +315,7 @@ fn position_translation(windows: Res<Windows>, mut q: Query<(&Position, &mut Tra
     );
   }
 }
+
 ///copyable, cloneable, hashable position.
 #[derive(Debug, Default, Copy, Clone, Eq, PartialEq, Hash)]
 struct Position {

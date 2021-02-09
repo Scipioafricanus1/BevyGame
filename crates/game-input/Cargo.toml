@@ -8,3 +8,5 @@ edition = "2018"
 
 [dependencies]
 bevy = "0.4.0"
+game-core = {path = "../game-core"}
+game-entities = {path = "../game-entities"}

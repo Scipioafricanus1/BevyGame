@@ -1,5 +1,5 @@
-pub use bevy::{prelude::*,};
-
+use bevy::{prelude::*,};
+use game_entities::*;
 
 
 
@@ -18,72 +18,47 @@ pub mod stages {
 pub struct CorePlugin;
 impl Plugin for CorePlugin {
   fn build( &self, app: &mut AppBuilder) {
+    app.add_resource( GameTimer( Timer::from_seconds(0.1, false) ))
+    .add_startup_system_to_stage(stages::INIT, spawn_player.system());
     
   }
 }
 
-#[derive(Debug)]
-pub struct InputTimer(pub Timer);
-impl Default for InputTimer {
-    fn default() -> Self {
-        InputTimer(Timer::from_seconds(0.1, false))
-    }
+fn core_setup(
+  commands: &mut Commands,
+  materials: Res<Materials>,
+  mut color_materials: ResMut<Assets<ColorMaterial>>
+) {
+  commands
+  .insert_resource(Materials {
+    player_material: color_materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
+  });
+}
+
+fn spawn_player(commands: &mut Commands, materials: Res<Materials>) {
+  commands.spawn(SpriteBundle {
+    material: materials.player_material.clone(),
+    ..Default::default()
+  }).with(PlayerEntity::default());
 }
 
 
+struct GameTimer(Timer);
 
-pub struct WorldSettings {
-    pub tile_size: f32,
-    pub base_player_speed: f32,
-    pub base_npc_speed: f32,
-    pub base_scale: f32,
-  }
-  
-  impl Default for WorldSettings {
-    fn default() -> Self {
-      WorldSettings {
-        tile_size: 16.,
-        base_player_speed: 8.,
-        base_npc_speed: 8.,
-        base_scale: 5.,
-      }
-    }
-  }
-
-pub enum Direction {
-  None,
-  Left,
-  Right,
-  Up,
-  Down,
-}
-pub struct GameTimer(Timer);
-///Component: vector 1, vector 2 
-pub struct Movement{
-  vector1: Direction,
-  vector2: Direction,
-}
-
-pub fn timer_ticker_system(
-  timer: ResMut<GameTimer>,
+//system for change in time every loop
+fn timer_ticker_system(
+  mut timer:  ResMut<GameTimer>,
   time: Res<Time>,
 ) {
-
-}
-
-/// movement system should be the same for NPC and Player imo
-/// we need movment, time resource that ticks down, timer that can finish, 
-/// and the entity we are moving
-pub fn move_system(
-  movement: Res<Movement>,
-  timer: Res<Timer>,
-  entity: Entity
-) {
-
+  timer.0.tick(time.delta_seconds());
 }
 
 
 
+
+struct Materials {
+  player_material: Handle<ColorMaterial>,
+}
 
 
 

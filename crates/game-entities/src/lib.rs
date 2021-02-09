@@ -1,8 +1,17 @@
+use bevy::prelude::*;
 
+struct GameEntitiesPlugin;
+impl Plugin for GameEntitiesPlugin {
+    fn build(&self,  app: &mut AppBuilder) {
+        
+    }
+}
 
-
-
-
+enum PlayerState {
+    JUMPING,
+    RUNNING,
+    IDLE,
+}
 
 
 
@@ -14,7 +23,16 @@
 /// Inventory
 /// CombatStats
 /// Weapon : Assault Rifle(magazine ammo: 10)
-struct PlayerEntity;
+pub struct PlayerEntity {
+    player_state: PlayerState,
+}
+impl Default for PlayerEntity {
+    fn default() -> Self {
+        PlayerEntity {
+            player_state: PlayerState::IDLE,
+        }
+    }
+}
 
 
 ///Components:
