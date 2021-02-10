@@ -77,20 +77,6 @@ struct Interactable;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #[cfg(test)]
 mod tests {
     #[test]

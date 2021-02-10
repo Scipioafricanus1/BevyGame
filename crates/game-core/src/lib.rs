@@ -5,8 +5,6 @@ use game_entities::*;
 
 //not sure the usefulness of a core but will see later. Might come in use when I think of all systems working together.
 
-
-
 pub mod stages {
     pub const INIT: &'static str = "init";
     pub const POST_INIT: &'static str = "post_init";
@@ -59,12 +57,6 @@ fn timer_ticker_system(
 struct Materials {
   player_material: Handle<ColorMaterial>,
 }
-
-
-
-
-
-
 
 
 
